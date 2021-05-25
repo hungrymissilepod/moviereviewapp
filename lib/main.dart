@@ -8,7 +8,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/counter_cubit.dart';
 
 /// Widgets
+import 'package:moviereviewapp/widgets/watchlist_page_widget.dart';
 import 'package:moviereviewapp/widgets/trending_page_widget.dart';
+import 'package:moviereviewapp/widgets/profile_page_widget.dart';
 
 void main() {
   runApp(MyApp());
@@ -32,11 +34,6 @@ class MyApp extends StatelessWidget {
           unselectedItemColor: Colors.grey,
         ),
         appBarTheme: AppBarTheme(
-          // color: Color(kAccentColour),
-          // backgroundColor: Colors.black,
-          brightness: Brightness.dark,
-          color: Colors.orange,
-
         ),
         primarySwatch: Colors.red,
       ),
@@ -131,47 +128,3 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class ProfilePage extends StatefulWidget {
-  @override
-  _ProfilePageState createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          // TODO: user info. image, username, location, bio, etc
-          Container(
-            child: Text('user info here'),
-          ),
-          // TODO: user movie reviews and comments here
-          Container(
-            child: Column(
-              children: [
-                Text('movie review 1'),
-                Text('movie review 2'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// TODO: use futurebuilder here to display list of movies user has added to their watchlist
-class WatchlistPage extends StatefulWidget {
-  @override
-  _WatchlistPageState createState() => _WatchlistPageState();
-}
-
-class _WatchlistPageState extends State<WatchlistPage> {
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(child: Text('watchlist'),),
-    );
-  }
-}

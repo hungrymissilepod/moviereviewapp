@@ -10,11 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:moviereviewapp/models/movie_model.dart';
 
 /// Widgets
-import 'package:moviereviewapp/widgets/movie_poster_widget.dart';
+import 'package:moviereviewapp/widgets/movie_grid_widget.dart';
 
-
-/// TODO: move to own widget file
-/// TODO: change app bar title to "Trending"
 class TrendingPage extends StatefulWidget {
   @override
   _TrendingPageState createState() => _TrendingPageState();
@@ -130,25 +127,7 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
                       ),
                     ),
                   ),
-                  SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 1/1.5,
-                      crossAxisSpacing: gridPadding,
-                      mainAxisSpacing: gridPadding,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (BuildContext context, int index) {
-                        return MoviePoster(
-                          _movies[index].title,
-                          _movies[index].voteAverage,
-                          _movies[index].imageUrl,
-                          _movies[index],
-                        );
-                      },
-                      childCount: _movies.length,
-                    ),
-                  ),
+                  MovieGrid(_movies, gridPadding),
                 ],
               ),
             );
