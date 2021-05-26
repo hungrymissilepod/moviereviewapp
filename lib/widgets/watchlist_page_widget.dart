@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moviereviewapp/cubit/user_id_cubit.dart';
 import 'dart:convert' show json;
 
 /// Utilities
@@ -25,14 +27,12 @@ class _WatchlistPageState extends State<WatchlistPage> {
   /// List of [Movie] objects we will display in scroll view
   List<Movie> _movies = [];
 
-  // TODO: mock data
-  // TODO: get user's watchlist movies from our server
-  /// List of user's watchlist movies
-  List<int> _favMovies = [578701, 567189, 399566, 717192, 635302, 791373];
-
   Future getMovies() async {
-    print('getMovies - watchlist');
-    for(int i in _favMovies) {
+    _movies.clear();
+    /// Get User's watchlist
+    List<int> watchlist = BlocProvider.of<UserCubit>(context, listen: true).state.watchlist;
+
+    for (int i in watchlist) {
       var url = Uri.parse('https://api.themoviedb.org/3/movie/$i?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');  
       var response = await http.get(url);
       final body = json.decode(response.body);
@@ -42,8 +42,8 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _future = getMovies();
   }
 
@@ -56,7 +56,6 @@ class _WatchlistPageState extends State<WatchlistPage> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
-    print('build - WatchlistPage');
     return SafeArea(
       child: FutureBuilder(
         future: _future,
@@ -94,7 +93,6 @@ class _WatchlistPageState extends State<WatchlistPage> {
           return Center(child: CircularProgressIndicator());
         },
       ),
-      // child: Container(child: Text('watchlist'),),
     );
   }
 }

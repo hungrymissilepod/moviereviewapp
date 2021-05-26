@@ -20,8 +20,6 @@ class MoviePoster extends StatelessWidget {
     double stars = vote / 2; /// convert vote score to number of stars
     return GestureDetector(
       onTap: () {
-        print('tapping movie: ${movie.id}');
-        // Navigator.of(context).push(MaterialPageRoute(builder: (context) => MovieInfoPage()));
         if(Platform.isIOS) { Navigator.of(context).push(MaterialPageRoute(builder: (context) => MovieInfoPage(id: movie.id), settings: RouteSettings(name: 'MovieInfoPage'))); }
         else { Navigator.push(context, PageRouteBuilder(pageBuilder: (_, __, ___) => MovieInfoPage(id: movie.id), settings: RouteSettings(name: 'MovieInfoPage'))); }
       },

@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
+// TODO: add edit button to tile
+// TODO: edit button should take user to form and they should be able to change their review
+// TODO: add delete button so user can also delete their review
 class UserReviewCard extends StatelessWidget {
+
+  UserReviewCard(this.title, this.body);
+
+  final String title;
+  final String body;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -10,22 +18,17 @@ class UserReviewCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // TODO: show user avatar and name
               Text(
-                'title',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               SizedBox(height: 6),
               Text(
-                'body odfkodfko ksdks jdssdjsdj  ek  efkdjfdj f d s kjsdkjs kjk ji ji jidjwdj j iji ',
-                style: TextStyle(
-                  fontSize: 14,
-                ),
+                body,
+                style: TextStyle(fontSize: 14),
               ),
             ],
           ),

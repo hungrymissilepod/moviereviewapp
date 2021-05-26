@@ -36,7 +36,7 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
   
   Future getMovies() async {
     setState(() { _isLoading = true; _page++; });
-    print('getMovies - page: $_page');
+    // print('getMovies - page: $_page');
 
     /// Get movie data for this [_page]
     var url = Uri.parse('https://api.themoviedb.org/3/movie/popular?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US&page=$_page');
@@ -79,7 +79,6 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
-    print('build - TrendingPage');
     super.build(context);
     return SafeArea(
       child: FutureBuilder(
@@ -93,7 +92,6 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
                 controller: _controller,
                 slivers: [
                   SliverAppBar(
-                    // brightness: Brightness.light,
                     backgroundColor: Color(kBackgroundColour),
                     toolbarHeight: SizeConfig.blockSizeVertical * 22,
                     title: Container(
