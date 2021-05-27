@@ -94,20 +94,23 @@ class _UserReviewCardState extends State<UserReviewCard> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: 6),
-                                  Text(
-                                    widget.review.title,
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
-                                  SizedBox(height: 6),
-                                  Text(
-                                    widget.review.body,
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ],
+                              Container(
+                                width: SizeConfig.blockSizeHorizontal * 70,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: 6),
+                                    Text(
+                                      widget.review.title,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                    SizedBox(height: 6),
+                                    Text(
+                                      widget.review.body,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
                               ),
                                widget.review.userId == widget.userId ?
                               IconButton(

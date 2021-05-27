@@ -24,65 +24,46 @@ class UserCubit extends Cubit<UserState> {
     // TODO: handle errors here - could have network error when getting user
   }
 
-  // TODO: still need to get this updating the wishlist screen properly
-  addMovieToWatchlist(User user, int i) {
-    print('addMovieToList');
-    // user.watchlist.add(i);
-
+  /// When user toggles to add or remove movie from watchlist
+  toggleMovieInWatchlist(User user, int i) async {
+    /// If this movie is already in watchlist, remove it
     if (user.watchlist.contains(i)) {
       user.watchlist.remove(i);
       user.movies.removeWhere((element) => element.id == i);
+      await server_util.removeMovieFromWatchlist(user.id, i);
     } else {
-      server_util.addRemoveToWatchlist(user.watchlist, i);
       user.watchlist.add(i);
+      await server_util.addMovieToWatchlist(user.id, i);
+      user.movies.add(await server_util.getMovieById(i));
     }
 
     emit(UserLoaded(user));
   }
 
-  /// Change user id to [id]. For testing purposes
-  // void changeUser(String id) {
-  //   emit(User(id: id));
-  //   loadUser();
-  // }
+  
+  /// The current test account signed in
+  int _currentUser = 0;
 
-  // /// Set the User object in this Cubit
-  // void setUser(User u) {
-  //   if (state.id != u.id || state.username != u.username) {
-  //     emit(u);
-  //   }
-  // }
+  /// Alternate user - for testing
+  Future<void> alternateUser() async {
+    final user = await _userRepository.fetchUser(_getNextUserId());
+    emit(UserLoaded(user));
+  }
 
-  // void addRemoveToWatchlist(int i) {
-  //   /// Add to watchlist if not already in watchlist
-  //   if (!state.watchlist.contains(i)) {
-  //     state.watchlist.add(i);
-  //   } else { /// Else remove from watchlist
-  //     state.watchlist.remove(i);
-  //   }
-  //   emit(state);
-  //   loadMovies();
-  // }
-
-  // Future loadMovies() async {
-  //   state.movies = await server_util.getWatchlistMovies(state.watchlist);
-  //   emit(state);
-  // }
-
-  // /// Load User from database
-  // Future<void> loadUser() async {
-  //   print('cubit - loadUser');
-  //   var url = Uri.parse('http://localhost:5000/api/user/${state.id}');
-  //   var response = await http.get(url);
-  //   final body = json.decode(response.body);
-
-  //   // User u = User.fromJson(body);
-  //   // u.movies = await server_util.getWatchlistMovies(u.watchlist);
-  //   // setUser(u);
-
-
-  //   setUser(User.fromJson(body));
-  //   loadMovies();
-  // }
-
+  String _getNextUserId() {
+    switch (_currentUser) {
+      case 0:
+        _currentUser = 1;
+        return 'e0d41103-d763-455c-8232-956206005d3d';
+      case 1:
+        _currentUser = 2;
+        return '6d95bf83-8fb3-43b3-8fba-d5792b52d75f';
+      case 2:
+        _currentUser = 0;
+        return 'f0d64d51-e46b-41ac-95a8-621dbe806409';
+      default:
+        _currentUser = 0;
+        return 'f0d64d51-e46b-41ac-95a8-621dbe806409';
+    }
+  }
 }

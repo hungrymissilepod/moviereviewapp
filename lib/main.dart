@@ -73,7 +73,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _currentPage = 1;
-    _future = BlocProvider.of<UserCubit>(context).getUser('e0d41103-d763-455c-8232-956206005d3d');
+    /// Load default user
+    _future = BlocProvider.of<UserCubit>(context).getUser('f0d64d51-e46b-41ac-95a8-621dbe806409');
   }
 
   @override
@@ -107,14 +108,18 @@ class _MyHomePageState extends State<MyHomePage> {
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                // print('main - future done');
                 return Scaffold(
-                  // * FAB button as a way to alternate accounts. For development purposes only!
-                  floatingActionButton: _currentPage == 1 ? FloatingActionButton(
-                    onPressed: () {
-                      BlocProvider.of<UserCubit>(context).getUser('f0d64d51-e46b-41ac-95a8-621dbe806409');
-                    },
-                  ) : Container(),
+                  /// Use FloatingActionButton to change between test accounts
+                  // floatingActionButton: _currentPage == 1 ? FloatingActionButton(
+                  //   onPressed: () { BlocProvider.of<UserCubit>(context).alternateUser(); },
+                  //   child: Column(
+                  //     mainAxisAlignment: MainAxisAlignment.center,
+                  //     children: [
+                  //       Icon(Icons.person_rounded),
+                  //       Text('Change user', textAlign: TextAlign.center, style: TextStyle(fontSize: 9),),
+                  //     ],
+                  //   ),
+                  // ) : Container(),
                   body: PageView(
                     controller: _pageController,
                     children: [

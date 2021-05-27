@@ -71,7 +71,7 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
   _tapFavouriteButton(UserLoaded state) async {
     print('tapFavouriteButton: ${_movieInfo.id}');
     setState(() {
-      BlocProvider.of<UserCubit>(context).addMovieToWatchlist(state.user, _movieInfo.id);
+      BlocProvider.of<UserCubit>(context).toggleMovieInWatchlist(state.user, _movieInfo.id);
     });
   }
 
@@ -93,10 +93,9 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
                     return Scaffold(
                       floatingActionButton: FloatingActionButton(
                         onPressed: () {
-                          print('review movie');
                           showDialog(context: context, builder: (BuildContext context) => WriteReviewDialog(state.user.id, _movieInfo.id));
                         },
-                        child: Icon(Icons.rate_review_rounded, color: Colors.black),
+                        child: Icon(Icons.rate_review_rounded),
                       ),
                       body: Column(
                         children: [

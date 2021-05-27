@@ -31,6 +31,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
+          print('watchlist page - bloc builder - loaoded');
           return SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: gridPadding),

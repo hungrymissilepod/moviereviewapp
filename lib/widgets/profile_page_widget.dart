@@ -64,52 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Card(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(15.0),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    height: 150,
-                                    width: 150,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Color(kAccentColour), width: 2),
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                        fit: BoxFit.fitHeight,
-                                        image: Image.network(state.user.imageUrl).image,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(height: 10),
-                                  Text(state.user.username),
-                                  SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.place),
-                                      Text(state.user.location),
-                                    ],
-                                  ),
-                                  SizedBox(height: 10),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 15),
-                                    child: Text(state.user.bio, textAlign: TextAlign.center),
-                                  ),
-                                  SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      UserInfoColumn(state.user.watchlist.length, 'Watchlist', Icon(Icons.favorite_rounded)),
-                                      UserInfoColumn(_reviews.length, 'Reviews', Icon(Icons.star_rounded)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          UserInfoCard(_reviews),
                           Padding(
                             padding: EdgeInsets.fromLTRB(0, 10, 0, 15),
                             child: Text(
@@ -122,6 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           Column(children: getReviewCards(state.user.id)),
+                          SizedBox(height: 50),
                         ],
                       ),
                     ),
@@ -135,6 +91,70 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         }
       ),
+    );
+  }
+}
+
+class UserInfoCard extends StatelessWidget {
+
+  UserInfoCard(this.reviews);
+
+  final List<Review> reviews;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          return Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+            child: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                children: [
+                  Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Color(kAccentColour), width: 2),
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        fit: BoxFit.fitHeight,
+                        image: Image.network(state.user.imageUrl).image,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(state.user.username),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.place),
+                      Text(state.user.location),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: Text(state.user.bio, textAlign: TextAlign.center),
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      UserInfoColumn(state.user.watchlist.length, 'Watchlist', Icon(Icons.favorite_rounded)),
+                      UserInfoColumn(reviews.length, 'Reviews', Icon(Icons.star_rounded)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return CircularProgressIndicator();
+      },
     );
   }
 }

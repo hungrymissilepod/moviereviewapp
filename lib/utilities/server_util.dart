@@ -10,12 +10,13 @@ import 'package:moviereviewapp/models/review_model.dart';
 import 'package:moviereviewapp/models/user_model.dart';
 
 
-var domain = "http://localhost:5000/api/user";
+// var domain = "http://localhost:5000/api/user"; /// test domain
+var domain = "https://jakemoviereviewserver.herokuapp.com/api/user";
 
 /// Get User from database
 Future<User> getUser(String id) async {
   print('server_utils - getUser: $id');
-  var url = Uri.parse('http://localhost:5000/api/user/$id');
+  var url = Uri.parse('$domain/$id');
   var response = await http.get(url);
   final body = json.decode(response.body);
   return User.fromJson(body);
@@ -46,6 +47,15 @@ Future<List<Movie>> getWatchlistMovies(List<int> watchlist) async {
   return _movies;
 }
 
+/// Get on Movie by [id]
+Future<Movie> getMovieById(int id) async {
+  print('server_util - getMovieById: $id');
+  var url = Uri.parse('https://api.themoviedb.org/3/movie/$id?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');  
+  var response = await http.get(url);
+  final body = json.decode(response.body);
+  return Movie.fromJson(body);
+}
+
 /// Get information about movie from The Movie Database
 Future<MovieInfo> getMovieInfo(int movieId) async {
   print('server_util - getMovieInfo: $movieId');
@@ -55,18 +65,19 @@ Future<MovieInfo> getMovieInfo(int movieId) async {
   return MovieInfo.fromJSON(body);
 }
 
-/// Add or remove movie to user's watchlist
-Future<void> addRemoveToWatchlist(List<int> watchlist, int i) async {
-  print('server_util - addRemoveToWatchlist: $i');
-  var url = Uri.parse('$domain/e0d41103-d763-455c-8232-956206005d3d/watchlist?movie_id=$i');
-  /// If watchlist already contains this movie, remove it
-  if (watchlist.contains(i)) {
-    print('addRemoveToWatchlist - delete');
-    await http.delete(url);
-  } else { /// else, add to watchlist
-  print('addRemoveToWatchlist - add');
-    await http.put(url);
-  }
+/// Add a movie with [id] to user watchlist
+Future<void> addMovieToWatchlist(String userId, int movieId) async {
+  print('server_util - addMovieToWatchList: $movieId');
+  var url = Uri.parse('$domain/$userId/watchlist?movie_id=$movieId');
+  var response = await http.put(url);
+  print(response.body);
+}
+
+/// Add a movie with [id] from user watchlist
+Future<void> removeMovieFromWatchlist(String userId, int movieId) async {
+  print('server_util - removeMovieFromWatchlist: $movieId');
+  var url = Uri.parse('$domain/$userId/watchlist?movie_id=$movieId');
+  await http.delete(url);
 }
 
 /// Get list of Reviews written by user
