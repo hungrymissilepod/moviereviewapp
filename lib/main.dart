@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moviereviewapp/models/user_repository.dart';
 
 /// Utilities
 import 'package:moviereviewapp/utilities/ui_constants.dart';
@@ -6,9 +7,6 @@ import 'package:moviereviewapp/utilities/ui_constants.dart';
 /// Bloc + Cubit
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/user_cubit.dart';
-
-/// Models
-import 'package:moviereviewapp/models/user_model.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/watchlist_page_widget.dart';
@@ -23,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => UserCubit(),
+      create: (context) => UserCubit(UserRepository()),
       child: MaterialApp(
         title: 'Reel Deal',
         theme: ThemeData(
@@ -75,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _currentPage = 1;
-    _future = BlocProvider.of<UserCubit>(context).loadUser();
+    _future = BlocProvider.of<UserCubit>(context).getUser('e0d41103-d763-455c-8232-956206005d3d');
   }
 
   @override
@@ -93,97 +91,68 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserCubit, User>(
-      builder: (context, user) {
-        print('main - build - ${BlocProvider.of<UserCubit>(context).state.id}');
-        return FutureBuilder(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              print('main - future done');
-              return Scaffold(
-                // * FAB button as a way to alternate accounts. For development purposes only!
-                // floatingActionButton: FloatingActionButton(
-                //   onPressed: () { BlocProvider.of<UserCubit>(context).changeUser('f0d64d51-e46b-41ac-95a8-621dbe806409'); },
-                // ),
-                body: PageView(
-                  controller: _pageController,
-                  children: [
-                    WatchlistPage(),
-                    TrendingPage(),
-                    ProfilePage(),
-                  ],
-                ),
-                bottomNavigationBar: BottomNavigationBar(
-                  onTap: _onNavBarItemTapped,
-                  currentIndex: _currentPage,
-                  items: [
-                    BottomNavigationBarItem(
-                      label: 'Watchlist',
-                      icon: Icon(Icons.bookmark),
-                    ),
-                    BottomNavigationBarItem(
-                      label: 'Trending',
-                      icon: Icon(Icons.theaters),
-                    ),
-                    BottomNavigationBarItem(
-                      label: 'Profile',
-                      icon: Icon(Icons.person_rounded),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return Center(child: CircularProgressIndicator());
-          },
-        );
+    return BlocConsumer<UserCubit, UserState>(
+      listener: (context, state) {
+        // TODO: can show messages based on UserState
+        // if (state is UserLoaded) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(content: Text('error'),)
+        //   );
+        // }
+      },
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          print('main - build - ${BlocProvider.of<UserCubit>(context).state}');
+          return FutureBuilder(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                // print('main - future done');
+                return Scaffold(
+                  // * FAB button as a way to alternate accounts. For development purposes only!
+                  floatingActionButton: _currentPage == 1 ? FloatingActionButton(
+                    onPressed: () {
+                      BlocProvider.of<UserCubit>(context).getUser('f0d64d51-e46b-41ac-95a8-621dbe806409');
+                    },
+                  ) : Container(),
+                  body: PageView(
+                    controller: _pageController,
+                    children: [
+                      WatchlistPage(),
+                      TrendingPage(),
+                      ProfilePage(),
+                    ],
+                  ),
+                  bottomNavigationBar: BottomNavigationBar(
+                    onTap: _onNavBarItemTapped,
+                    currentIndex: _currentPage,
+                    items: [
+                      BottomNavigationBarItem(
+                        label: 'Watchlist',
+                        icon: Icon(Icons.bookmark),
+                      ),
+                      BottomNavigationBarItem(
+                        label: 'Trending',
+                        icon: Icon(Icons.theaters),
+                      ),
+                      BottomNavigationBarItem(
+                        label: 'Profile',
+                        icon: Icon(Icons.person_rounded),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Center(child: CircularProgressIndicator());
+            },
+          );
+        } else if (state is UserError) {
+          return Center(child: Text('Failed to load user data'));
+          // TODO: should have a button where user can retry to load data
+        } else {
+          return Center(child: CircularProgressIndicator());
+        }
       },
     );
-
-    // return FutureBuilder(
-    //   future: _future,
-    //   builder: (context, snapshot) {
-    //     if (snapshot.connectionState == ConnectionState.done) {
-    //       print('main - future done');
-    //       return Scaffold(
-    //         // * FAB button as a way to alternate accounts. For development purposes only!
-    //         floatingActionButton: FloatingActionButton(
-    //           onPressed: () { BlocProvider.of<UserCubit>(context).changeUser('f0d64d51-e46b-41ac-95a8-621dbe806409'); },
-    //         ),
-    //         body: BlocBuilder<UserCubit, User>( /// use BlocBuilder here so children are rebuilt when changing user
-    //           builder: (context, id) {
-    //             return PageView(
-    //               controller: _pageController,
-    //               children: [
-    //                 WatchlistPage(),
-    //                 TrendingPage(),
-    //                 ProfilePage(),
-    //               ],
-    //             );
-    //           },
-    //         ),
-    //         bottomNavigationBar: BottomNavigationBar(
-    //           onTap: _onNavBarItemTapped,
-    //           currentIndex: _currentPage,
-    //           items: [
-    //             BottomNavigationBarItem(
-    //               label: 'Watchlist',
-    //               icon: Icon(Icons.bookmark),
-    //             ),
-    //             BottomNavigationBarItem(
-    //               label: 'Trending',
-    //               icon: Icon(Icons.theaters),
-    //             ),
-    //             BottomNavigationBarItem(
-    //               label: 'Profile',
-    //               icon: Icon(Icons.person_rounded),
-    //             ),
-    //           ],
-    //         ),
-    //       );
-    //     }
-    //     return Center(child: CircularProgressIndicator());
-    //   },
-    // );
   }
 }

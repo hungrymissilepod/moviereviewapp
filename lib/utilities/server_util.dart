@@ -7,9 +7,19 @@ import 'package:http/http.dart' as http;
 import 'package:moviereviewapp/models/movie_info_model.dart';
 import 'package:moviereviewapp/models/movie_model.dart';
 import 'package:moviereviewapp/models/review_model.dart';
+import 'package:moviereviewapp/models/user_model.dart';
 
 
 var domain = "http://localhost:5000/api/user";
+
+/// Get User from database
+Future<User> getUser(String id) async {
+  print('server_utils - getUser: $id');
+  var url = Uri.parse('http://localhost:5000/api/user/$id');
+  var response = await http.get(url);
+  final body = json.decode(response.body);
+  return User.fromJson(body);
+}
 
 /// Get list of Movies for Trending Page
 Future<List<Movie>> getMovies(int page) async {
@@ -74,6 +84,14 @@ Future<void> postReview(Review review) async {
   var url = Uri.parse('$domain/review?user_id=${review.userId}&movie_id=${review.movieId}');
   String str = json.encode(review.toMap());
   var response = await http.post(url, headers: { 'Content-Type': 'application/json', }, body: str);
+  print(response.body);
+}
+
+/// Delete Review
+Future<void> deleteReview(String id) async {
+  print('server_util - postReview');
+  var url = Uri.parse('$domain/review?review_id=$id');
+  var response = await http.delete(url);
   print(response.body);
 }
 

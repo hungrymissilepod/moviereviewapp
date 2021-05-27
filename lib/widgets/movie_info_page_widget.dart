@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:moviereviewapp/models/review_model.dart';
 
 /// Utilities
 import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
+import 'package:moviereviewapp/utilities/ui_constants.dart';
 
 /// Models
+import 'package:moviereviewapp/models/review_model.dart';
 import 'package:moviereviewapp/models/movie_info_model.dart';
-import 'package:moviereviewapp/utilities/ui_constants.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/user_review_widget.dart';
@@ -15,6 +15,8 @@ import 'package:moviereviewapp/widgets/user_review_widget.dart';
 /// Bloc + Cubit
 import 'package:moviereviewapp/cubit/user_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:uuid/uuid.dart';
 
 class MovieInfoPage extends StatefulWidget {
   
@@ -49,21 +51,27 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
     _reviews = await server_util.getReviewsForMovie(widget.id);
     return _movieInfo;
   }
+  
+  _deleteReview(String id) async {
+    await server_util.deleteReview(id);
+    setState(() {
+      _reviews.removeWhere((e) => e.id == id);
+    });
+  }
 
-  List<Widget> getReviewCards() {
+  List<Widget> getReviewCards(String id) {
     List<Widget> widgets = [];
     for (Review r in _reviews) {
-      widgets.add(UserReviewCard(r.title, r.body));
+      widgets.add(UserReviewCard(r, id, _deleteReview));
     }
     return widgets;
   }
 
   /// Add or remove movie to watchlist
-  _tapFavouriteButton() async {
-    List<int> watchlist = BlocProvider.of<UserCubit>(context).state.watchlist;
-    await server_util.addRemoveToWatchlist(watchlist, _movieInfo.id);
+  _tapFavouriteButton(UserLoaded state) async {
+    print('tapFavouriteButton: ${_movieInfo.id}');
     setState(() {
-      BlocProvider.of<UserCubit>(context).addRemoveToWatchlist(_movieInfo.id);
+      BlocProvider.of<UserCubit>(context).addMovieToWatchlist(state.user, _movieInfo.id);
     });
   }
 
@@ -77,223 +85,179 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               double stars = _movieInfo.voteAverage / 2; /// convert vote score to number of stars
-              var user = BlocProvider.of<UserCubit>(context, listen: true).state;
-              bool liked = user.watchlist.contains(_movieInfo.id);
-              // return CustomScrollView(
-              //   physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              //   slivers: [
-              //     SliverAppBar(
-              //       automaticallyImplyLeading: false,
-              //       // floating: true,
-              //       // pinned: true,
-              //       // stretch: true,
-              //       flexibleSpace: FlexibleSpaceBar(
-              //         title: Image.network(
-              //           'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
-              //           fit: BoxFit.cover,
-              //           loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
-              //           if (loadingProgress == null) return child;
-              //             return Center(child: CircularProgressIndicator());
-              //           },
-              //         ),
-              //         // background: Image.network(
-              //         //   'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
-              //         //   fit: BoxFit.fitHeight,
-              //         //   loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
-              //         //   if (loadingProgress == null) return child;
-              //         //     return Center(child: CircularProgressIndicator());
-              //         //   },
-              //         // ),
-              //       ),
-              //       brightness: Brightness.dark,
-              //       backgroundColor: Color(kBackgroundColour),
-              //       toolbarHeight: SizeConfig.blockSizeVertical * 22,
-              //       // title: Image.network(
-              //       //   'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
-              //       //   fit: BoxFit.fitHeight,
-              //       //   loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
-              //       //   if (loadingProgress == null) return child;
-              //       //     return Center(child: CircularProgressIndicator());
-              //       //   },
-              //       // ),
-              //     ),
-              //   ],
-              // );
-
-              // TODO: use sliver app bar for better UI
-              return Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  onPressed: () {
-                    print('review movie');
-                    showDialog(context: context, builder: (BuildContext context) => WriteReviewDialog(_movieInfo.id));
-                  },
-                  child: Icon(Icons.rate_review_rounded, color: Colors.black),
-                ),
-                body: Column(
-                  children: [
-                    Stack(
-                      fit: StackFit.passthrough,
-                      children: [
-                        // TODO: entire page should only display once image is loaded
-                        Container(
-                          height: 260,
-                          child: Image.network(
-                            'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
-                            fit: BoxFit.cover,
-                            loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
-                            if (loadingProgress == null) return child;
-                              return Center(child: CircularProgressIndicator());
-                            },
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [ Colors.transparent, Colors.black87.withOpacity(0.35), Colors.black87 ],
+              bool liked = false;
+              return BlocBuilder<UserCubit, UserState>(
+                builder: (context, state) {
+                  if (state is UserLoaded) {
+                    liked = state.user.watchlist.contains(_movieInfo.id);
+                    return Scaffold(
+                      floatingActionButton: FloatingActionButton(
+                        onPressed: () {
+                          print('review movie');
+                          showDialog(context: context, builder: (BuildContext context) => WriteReviewDialog(state.user.id, _movieInfo.id));
+                        },
+                        child: Icon(Icons.rate_review_rounded, color: Colors.black),
+                      ),
+                      body: Column(
+                        children: [
+                          Stack(
+                            fit: StackFit.passthrough,
+                            children: [
+                              // TODO: entire page should only display once image is loaded
+                              Container(
+                                height: 260,
+                                child: Image.network(
+                                  'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
+                                  fit: BoxFit.cover,
+                                  loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                    return Center(child: CircularProgressIndicator());
+                                  },
+                                ),
                               ),
-                            ),
+                              Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [ Colors.transparent, Colors.black87.withOpacity(0.35), Colors.black87 ],
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: SizeConfig.blockSizeVertical * 1, horizontal: SizeConfig.blockSizeHorizontal * 3),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          _movieInfo.title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 50,
+                                left: 20,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () { Navigator.of(context).pop(); },
+                                  child: Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: Colors.white,
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 50,
+                                right: 20,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () { _tapFavouriteButton(state); },
+                                  child: Icon(
+                                    liked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SingleChildScrollView(
+                            physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: SizeConfig.blockSizeVertical * 1, horizontal: SizeConfig.blockSizeHorizontal * 3),
+                              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24.0),
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${_movieInfo.voteAverage}',
+                                        style: TextStyle(color: Color(kAccentColour), fontSize: 24),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Row(
+                                        children: List.generate(5, (index) {
+                                          IconData icon = Icons.star_outline_rounded; /// default to empty star
+                                          /// If this movie has more stars than [index+1], show a full star
+                                          if (stars > index+1) {
+                                            icon = Icons.star_rounded;
+                                            /// Check if this movie can get half a star. If stars are more than [index] and stars is greater by 0.5, show a half star
+                                          } else if (stars > index && (stars - index) >= 0.5) {
+                                            icon = Icons.star_half_rounded;
+                                          }
+                                          return Icon(icon, size: SizeConfig.blockSizeVertical * 3);
+                                        }),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${(_movieInfo.runtime/60).floor()}h ${_movieInfo.runtime%60}mins',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ), // TODO: check this code. Could unit test it??
+                                      SizedBox(width: 20),
+                                      Text(
+                                        '${_movieInfo.releaseDate}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ), // TODO: show release date in nice way
+                                    ],
+                                  ),
+                                  SizedBox(height: 15),
+                                  SizedBox(
+                                    height: 40,
+                                      child: ListView.builder(
+                                      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: _movieInfo.genres.length,
+                                      itemBuilder: (BuildContext context, int index) {
+                                        return GenreChip(_movieInfo.genres[index].name);
+                                      },
+                                    ),
+                                  ),
+                                  HeadingText('Synopsis'),
                                   Text(
-                                    _movieInfo.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    _movieInfo.overview,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
                                     ),
+                                  ),
+                                  HeadingText('User Reviews'),
+                                  Column(
+                                    children: getReviewCards(state.user.id),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          top: 50,
-                          left: 20,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () { Navigator.of(context).pop(); },
-                            child: Icon(
-                              Icons.arrow_back_rounded,
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 50,
-                          right: 20,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () { _tapFavouriteButton(); },
-                            child: Icon(
-                              liked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SingleChildScrollView(
-                      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  '${_movieInfo.voteAverage}',
-                                  style: TextStyle(color: Color(kAccentColour), fontSize: 24),
-                                ),
-                                SizedBox(width: 10),
-                                Row(
-                                  children: List.generate(5, (index) {
-                                    IconData icon = Icons.star_outline_rounded; /// default to empty star
-                                    /// If this movie has more stars than [index+1], show a full star
-                                    if (stars > index+1) {
-                                      icon = Icons.star_rounded;
-                                      /// Check if this movie can get half a star. If stars are more than [index] and stars is greater by 0.5, show a half star
-                                    } else if (stars > index && (stars - index) >= 0.5) {
-                                      icon = Icons.star_half_rounded;
-                                    }
-                                    return Icon(icon, size: SizeConfig.blockSizeVertical * 3);
-                                  }),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 15),
-                            Row(
-                              children: [
-                                Text(
-                                  '${(_movieInfo.runtime/60).floor()}h ${_movieInfo.runtime%60}mins',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ), // TODO: check this code. Could unit test it??
-                                SizedBox(width: 20),
-                                Text(
-                                  '${_movieInfo.releaseDate}',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ), // TODO: show release date in nice way
-                              ],
-                            ),
-                            SizedBox(height: 15),
-                            SizedBox(
-                              height: 40,
-                                child: ListView.builder( // TODO: use Row builder instead. Don't need this to scroll
-                                physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _movieInfo.genres.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return GenreChip(_movieInfo.genres[index].name);
-                                },
-                              ),
-                            ),
-                            HeadingText('Synopsis'),
-                            Text(
-                              _movieInfo.overview,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                            HeadingText('User Reviews'),
-                            Column(
-                              children: getReviewCards(),
-                            ),
-                            // Column(
-                            //   crossAxisAlignment: CrossAxisAlignment.stretch,
-                            //   children: [
-                            //     UserReviewCard('title', 'body'),
-                            //     UserReviewCard('title', 'body'),
-                            //     // TODO: ensure that we use scroll view here and that we can have lots of reviews here
-                            //   ],
-                            // ),
-                          ],
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }
+                },
               );
             }
             return Center(child: CircularProgressIndicator());
@@ -357,7 +321,8 @@ class GenreChip extends StatelessWidget {
 
 class WriteReviewDialog extends StatefulWidget {
   
-  WriteReviewDialog(this.movieId);
+  WriteReviewDialog(this.userId, this.movieId);
+  final String userId;
   final int movieId;
 
   @override
@@ -382,9 +347,15 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
     }
 
     /// Post review to database
-    Review r = Review(userId: BlocProvider.of<UserCubit>(context).state.id, movieId: widget.movieId, title: _title, body: _body, rating: _rating.toInt());
+    String id = Uuid().v4();
+    Review r = Review(id: id, userId: widget.userId, movieId: widget.movieId, title: _title, body: _body, rating: _rating * 2); /// multiply by 2 because we have 5 stars but rating should be out of 10
     await server_util.postReview(r);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submitting Review')));
+    _closeForm();
+  }
+
+  _closeForm() {
+    Navigator.of(context).pop();
   }
 
   Widget showAlert() {
@@ -440,7 +411,7 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
       actions: [
         TextButton(
           child: Text('CANCEL', style: TextStyle(fontWeight: FontWeight.bold)),
-          onPressed: () { Navigator.of(context).pop(); },
+          onPressed: () { _closeForm(); },
         ),
         TextButton(
           child: Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),

@@ -6,6 +6,7 @@ import 'package:moviereviewapp/utilities/size_config.dart';
 
 /// Models
 import 'package:moviereviewapp/models/review_model.dart';
+import 'package:moviereviewapp/utilities/ui_constants.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/user_review_widget.dart';
@@ -21,32 +22,25 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
 
-  Future _future;
-
   /// List of User's reviews
   List<Review> _reviews = [];
-
-  loadData() async {
-    String id = BlocProvider.of<UserCubit>(context, listen: true).state.id;
-    /// Get all reviews for this user
-    await getUserReviews(id);
-  }
 
   Future getUserReviews(String id) async {
     _reviews.clear();
     _reviews.addAll(await server_util.getUserReviews(id));
   }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _future = loadData();
+  
+  _deleteReview(String id) async {
+    await server_util.deleteReview(id);
+    setState(() {
+      _reviews.removeWhere((e) => e.id == id);
+    });
   }
 
-  List<Widget> getReviewCards() {
+  List<Widget> getReviewCards(String id) {
     List<Widget> widgets = [];
     for (Review r in _reviews) {
-      widgets.add(UserReviewCard(r.title, r.body));
+      widgets.add(UserReviewCard(r, id, _deleteReview));
     }
     return widgets;
   }
@@ -56,91 +50,117 @@ class _ProfilePageState extends State<ProfilePage> {
     SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
     return SafeArea(
-      child: FutureBuilder(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: gridPadding),
-              child: SingleChildScrollView(
-                physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Card(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            Image.network(
-                              'https://i.imgur.com/Jvh1OQm.jpg',
-                              height: 150,
-                            ), // TODO: should be user image icon. should be clipped in circle
-                            Text(BlocProvider.of<UserCubit>(context).state.username),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.place),
-                                // Text(BlocProvider.of<UserCubit>(context).state.location),
-                              ],
-                            ),
-                            Text('usdsi djsj sdj isdjisids sduius sudsd usdisiuiu sidusid  iss s sds skd lkseo woieoioe sj hsdjs ij iiej gjg'),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text('${BlocProvider.of<UserCubit>(context).state.watchlist.length}'),
-                                        Icon(
-                                          Icons.favorite_rounded,
-                                        ),    
-                                      ],
+      child: BlocBuilder<UserCubit, UserState>(
+        builder: (context, state) {
+          if (state is UserLoaded) {
+            return FutureBuilder(
+              future: getUserReviews(state.user.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: gridPadding),
+                    child: SingleChildScrollView(
+                      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Card(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(15.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 150,
+                                    width: 150,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Color(kAccentColour), width: 2),
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        fit: BoxFit.fitHeight,
+                                        image: Image.network(state.user.imageUrl).image,
+                                      ),
                                     ),
-                                    Text('Watchlist')
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text('4'),
-                                        Icon(
-                                          Icons.star_rounded,
-                                        ),    
-                                      ],
-                                    ),
-                                    Text('Reviews')
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(state.user.username),
+                                  SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.place),
+                                      Text(state.user.location),
+                                    ],
+                                  ),
+                                  SizedBox(height: 10),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 15),
+                                    child: Text(state.user.bio, textAlign: TextAlign.center),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      UserInfoColumn(state.user.watchlist.length, 'Watchlist', Icon(Icons.favorite_rounded)),
+                                      UserInfoColumn(_reviews.length, 'Reviews', Icon(Icons.star_rounded)),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(0, 10, 0, 15),
+                            child: Text(
+                              'My Reviews',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 40,
+                              ),
+                            ),
+                          ),
+                          Column(children: getReviewCards(state.user.id)),
+                        ],
                       ),
                     ),
-                    Text(
-                      'My Reviews',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 40,
-                      ),
-                    ),
-                    Column(
-                      children: getReviewCards(),
-                    ),
-                  ],
-                ),
-              ),
+                  );
+                }
+                return Center(child: CircularProgressIndicator());
+              },
             );
+          } else {
+            return Container(child: Text('not loaded'));
           }
-          return Center(child: CircularProgressIndicator());
-        },
+        }
       ),
+    );
+  }
+}
+
+/// Used for showing Watchlist and Reviews in user profile
+class UserInfoColumn extends StatelessWidget {
+
+  UserInfoColumn(this.count, this.label, this.icon);
+  
+  final int count;
+  final String label;
+  final Icon icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Text('$count', style: TextStyle(fontSize: 16)),
+            icon,
+          ],
+        ),
+        SizedBox(height: 5),
+        Text(label, style: TextStyle(fontSize: 16)),
+      ],
     );
   }
 }

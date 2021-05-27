@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Utilities
-import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
+// import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
 import 'package:moviereviewapp/utilities/ui_constants.dart';
 
@@ -10,7 +10,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/user_cubit.dart';
 
 /// Models
-import 'package:moviereviewapp/models/movie_model.dart';
+// import 'package:moviereviewapp/models/movie_model.dart';
+// import 'package:moviereviewapp/models/user_model.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/movie_grid_widget.dart';
@@ -22,41 +23,16 @@ class WatchlistPage extends StatefulWidget {
 
 class _WatchlistPageState extends State<WatchlistPage> {
 
-  /// Future for FutureBuilder so we can wait until movies have loaded
-  Future _future;
-
-  /// List of [Movie] objects we will display in scroll view
-  List<Movie> _movies = [];
-
-  /// Get movies for user's watchlist
-  Future getMovies() async {
-    _movies.clear();
-    List<int> watchlist = BlocProvider.of<UserCubit>(context, listen: true).state.watchlist;
-    if (watchlist == null) return;
-    return _movies = await server_util.getWatchlistMovies(watchlist);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _future = getMovies();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
+  // TODO: should download movie data if user watchlist changes!
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
-    return SafeArea(
-      child: FutureBuilder(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          return SafeArea(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: gridPadding),
               child: CustomScrollView(
                 physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
@@ -80,14 +56,14 @@ class _WatchlistPageState extends State<WatchlistPage> {
                       ),
                     ),
                   ),
-                  MovieGrid(_movies, gridPadding),
+                  MovieGrid(state.user.movies, gridPadding),
                 ],
               ),
-            );
-          }
-          return Center(child: CircularProgressIndicator());
-        },
-      ),
+            ),
+          );
+        }
+        return Container(child: Text('no movies'));
+      }
     );
   }
 }
