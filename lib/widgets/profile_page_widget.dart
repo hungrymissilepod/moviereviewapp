@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:convert' show json;
 
 /// Utilities
+import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
-import 'package:http/http.dart' as http;
 
 /// Models
-import 'package:moviereviewapp/models/user_model.dart';
 import 'package:moviereviewapp/models/review_model.dart';
 
 /// Widgets
@@ -14,7 +12,7 @@ import 'package:moviereviewapp/widgets/user_review_widget.dart';
 
 /// Bloc + Cubit
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:moviereviewapp/cubit/user_id_cubit.dart';
+import 'package:moviereviewapp/cubit/user_cubit.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -29,20 +27,14 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Review> _reviews = [];
 
   loadData() async {
-    print('ProfilePage - loadData');
     String id = BlocProvider.of<UserCubit>(context, listen: true).state.id;
     /// Get all reviews for this user
     await getUserReviews(id);
   }
 
   Future getUserReviews(String id) async {
-    var url = Uri.parse('http://localhost:5000/api/user/review/user/$id');
-    var response = await http.get(url);
-    final body = json.decode(response.body);
-    print(body);
-
     _reviews.clear();
-    _reviews.addAll((body as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList());
+    _reviews.addAll(await server_util.getUserReviews(id));
   }
 
   @override
@@ -63,7 +55,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
-    print('build - ProfilePage');
     return SafeArea(
       child: FutureBuilder(
         future: _future,
@@ -87,12 +78,12 @@ class _ProfilePageState extends State<ProfilePage> {
                               'https://i.imgur.com/Jvh1OQm.jpg',
                               height: 150,
                             ), // TODO: should be user image icon. should be clipped in circle
-                            Text(BlocProvider.of<UserCubit>(context, listen: true).state.username),
+                            Text(BlocProvider.of<UserCubit>(context).state.username),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.place),
-                                Text(BlocProvider.of<UserCubit>(context).state.location),
+                                // Text(BlocProvider.of<UserCubit>(context).state.location),
                               ],
                             ),
                             Text('usdsi djsj sdj isdjisids sduius sudsd usdisiuiu sidusid  iss s sds skd lkseo woieoioe sj hsdjs ij iiej gjg'),

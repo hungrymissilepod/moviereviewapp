@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:convert' show json;
 
 /// Utilities
+import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
 import 'package:moviereviewapp/utilities/ui_constants.dart';
-import 'package:http/http.dart' as http;
 
 /// Models
 import 'package:moviereviewapp/models/movie_model.dart';
@@ -36,17 +35,7 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
   
   Future getMovies() async {
     setState(() { _isLoading = true; _page++; });
-    // print('getMovies - page: $_page');
-
-    /// Get movie data for this [_page]
-    var url = Uri.parse('https://api.themoviedb.org/3/movie/popular?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US&page=$_page');
-    var response = await http.get(url);
-    
-    /// Deserialise reponse body to json
-    final body = json.decode(response.body);
-    /// Convert json to list of movies and add them to [_movies] list
-    _movies.addAll((body['results'] as List).map((e) => Movie.fromJson(e as Map<String, dynamic>)).toList());
-
+    _movies.addAll(await server_util.getMovies(_page));
     setState(() { _isLoading = false; });
     return _movies;
   }

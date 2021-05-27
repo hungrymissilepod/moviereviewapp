@@ -1,4 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' show json;
+
 
 /// Models
 import 'package:moviereviewapp/models/user_model.dart';
@@ -10,6 +13,7 @@ class UserCubit extends Cubit<User> {
   /// Change user id to [id]. For testing purposes
   void changeUser(String id) {
     emit(User(id: id));
+    loadUser();
   }
 
   /// Set the User object in this Cubit
@@ -19,14 +23,23 @@ class UserCubit extends Cubit<User> {
     }
   }
 
-  void addToWatchlist(int i) {
+  void addRemoveToWatchlist(int i) {
     /// Add to watchlist if not already in watchlist
     if (!state.watchlist.contains(i)) {
       state.watchlist.add(i);
     } else { /// Else remove from watchlist
-      print('watchlist remove: $i');
       state.watchlist.remove(i);
     }
     emit(state);
   }
+
+  /// Load User from database
+  Future<void> loadUser() async {
+    print('cubit - loadUser');
+    var url = Uri.parse('http://localhost:5000/api/user/${state.id}');
+    var response = await http.get(url);
+    final body = json.decode(response.body);
+    setUser(User.fromJson(body));
+  }
+
 }

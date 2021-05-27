@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:moviereviewapp/cubit/user_id_cubit.dart';
-import 'dart:convert' show json;
 
 /// Utilities
+import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
 import 'package:moviereviewapp/utilities/ui_constants.dart';
-import 'package:http/http.dart' as http;
+
+/// Bloc + Cubit
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moviereviewapp/cubit/user_cubit.dart';
 
 /// Models
 import 'package:moviereviewapp/models/movie_model.dart';
@@ -27,18 +28,12 @@ class _WatchlistPageState extends State<WatchlistPage> {
   /// List of [Movie] objects we will display in scroll view
   List<Movie> _movies = [];
 
+  /// Get movies for user's watchlist
   Future getMovies() async {
     _movies.clear();
-    /// Get User's watchlist
     List<int> watchlist = BlocProvider.of<UserCubit>(context, listen: true).state.watchlist;
-
-    for (int i in watchlist) {
-      var url = Uri.parse('https://api.themoviedb.org/3/movie/$i?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');  
-      var response = await http.get(url);
-      final body = json.decode(response.body);
-      _movies.add(Movie.fromJson(body));
-    }
-    return _movies;
+    if (watchlist == null) return;
+    return _movies = await server_util.getWatchlistMovies(watchlist);
   }
 
   @override
