@@ -1,26 +1,11 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility that Flutter provides. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_test/flutter_test.dart';
-
-import 'package:moviereviewapp/main.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:bloc_test/bloc_test.dart';
-import 'package:http/http.dart' as http;
-
-import 'package:moviereviewapp/widgets/user_review_widget.dart';
 
 /// Testing
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 
 /// Bloc + Cubit
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/user_cubit.dart';
 import 'package:moviereviewapp/models/user_repository.dart';
 
@@ -29,6 +14,14 @@ import 'package:moviereviewapp/utilities/ui_constants.dart';
 
 /// Models
 import 'package:moviereviewapp/models/user_model.dart';
+import 'package:moviereviewapp/models/movie_model.dart';
+
+/// Widgets
+import 'package:moviereviewapp/main.dart';
+import 'package:moviereviewapp/widgets/movie_info_page_widget.dart';
+import 'package:moviereviewapp/widgets/movie_poster_widget.dart';
+import 'package:moviereviewapp/utilities/size_config.dart';
+
 
 /// User object created for testing
 final user = User(id: "123", username: "jake");
@@ -42,6 +35,11 @@ class MockUserRepository extends Mock implements UserRepository {
     return Future.delayed(Duration(seconds: 1), () => user);
   }
 }
+
+class MockBuildContext extends Mock implements BuildContext {}
+
+/// Useful for printing widget tree in console so we can see what is going on
+// debugDumpApp();
 
 void main() {
 
@@ -93,19 +91,100 @@ void main() {
     await tester.pump(Duration(seconds: 1));
     await tester.pumpAndSettle();
 
-    /// Try to find a widget with the key FAB (floating action button)
-    const testKey = ValueKey('FAB');
-    expect(find.byKey(testKey), findsOneWidget);
-
-    /// Useful for printing widget tree in console so we can see what is going on
-    // debugDumpApp();
+    /// Expect to find a FloatingActionButton
+    expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 
-  // TODO: make another test that will find and click the FAB
 
-  // TODO: make another test that will navigate to Profile page and delete a review
+  /// Test a movie poster that has a 7/10 rating
+  testWidgets('Movie poster stars', (WidgetTester tester) async {
+    
+    /// First pump the MaterialApp and Scaffold because we need to init SizeConfig
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(),
+      ),
+    );
 
-  // TODO: make another test that will select a movie, write and validate review and submit it
+    /// Get context from Scaffold
+    final BuildContext context = tester.element(find.byType(Scaffold));
+    /// Use context to init SizeConfig
+    SizeConfig().init(context);
 
-  // TODO: make another test that will select a movie and add or remove to watchlist
+    /// Now pump the tester with the MoviePoster
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MoviePoster(Movie(id: 0, title: 'Test movie', overview: 'sdsds', voteAverage: 7, imageUrl: "")),
+      ),
+    );
+    
+    /// If the movie has a 7/10 we expect to see 3 full stars and 1 half star (3.5 stars)
+    expect(find.byIcon(Icons.star_rounded), findsNWidgets(3));
+    expect(find.byIcon(Icons.star_half_rounded), findsNWidgets(1));
+  });
+
+
+  /// Tests for Write Review Dialog
+  group('Write Review Dialog', () {
+
+    /// Test submitting a review without entering any data
+    testWidgets('Test submitting a review without entering any data', (WidgetTester tester) async {
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(),
+        ),
+      );
+      /// Get context from Scaffold
+      final BuildContext context = tester.element(find.byType(Scaffold));
+      /// Show WriteReviewDialog dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return WriteReviewDialog("123", 12345);
+        }
+      );
+      /// Wait for dialog to be shown
+      await tester.pumpAndSettle(Duration(seconds: 1));
+      /// Expect to find "Leave a review" title in dialog box
+      expect(find.text('Leave a review'), findsOneWidget);
+      /// Tap the OK button without entering any information
+      await tester.tap(find.text('OK'));
+      await tester.pump(Duration(seconds: 1));
+      /// We expect the TextFormField validation to trigger and show error text
+      expect(find.text('Please enter a title'), findsOneWidget);
+    });
+
+    /// Test submitting a review with short body text
+    testWidgets('Test submitting a review with short body text', (WidgetTester tester) async {
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(),
+        ),
+      );
+      /// Get context from Scaffold
+      final BuildContext context = tester.element(find.byType(Scaffold));
+      /// Show WriteReviewDialog dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return WriteReviewDialog("123", 12345);
+        }
+      );
+      /// Wait for dialog to be shown
+      await tester.pumpAndSettle(Duration(seconds: 1));
+      /// Expect to find "Leave a review" title in dialog box
+      expect(find.text('Leave a review'), findsOneWidget);
+      /// Enter title text
+      await tester.enterText(find.byKey(ValueKey('titleTextFormField')), 'Test Movie Title');
+      /// Enter short body text
+      await tester.enterText(find.byKey(ValueKey('bodyTextFormField')), 'hello');
+      /// Tap the OK button to submit review
+      await tester.tap(find.text('OK'));
+      await tester.pump(Duration(seconds: 1));
+      /// We expect the TextFormField validation to trigger and show error text
+      expect(find.text('Must have more than 10 characters'), findsOneWidget);
+    });
+  });
 }

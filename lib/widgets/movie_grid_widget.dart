@@ -24,9 +24,6 @@ class MovieGrid extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
           return MoviePoster(
-            movies[index].title,
-            movies[index].voteAverage,
-            movies[index].imageUrl,
             movies[index],
           );
         },

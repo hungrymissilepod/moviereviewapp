@@ -25,14 +25,16 @@ class MockUserRepository extends Mock implements UserRepository {
 
 void main() {
   UserCubit userCubit;
-  MockUserRepository mockUserRepository;
+  MockUserRepository userRepository;
 
   group('User Cubit', () {
 
     setUp(() {
-      mockUserRepository = MockUserRepository();
-      userCubit = UserCubit(mockUserRepository);
+      userRepository = MockUserRepository();
+      userCubit = UserCubit(userRepository);
     });
+
+    /// Test that UserCubit loads correctly
     blocTest<UserCubit, UserState>(
       'emits [UserLoading, UserLoaded] states in order',
       build: () => userCubit,
@@ -50,7 +52,6 @@ void main() {
 
   /// Tests for user's watchlist
   group('User watchlist', () {
-
 
     /// Test adding a movie to watchlist
     test('Add movie to watchlist', () async {

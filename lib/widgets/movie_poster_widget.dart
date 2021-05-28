@@ -9,15 +9,12 @@ import 'package:moviereviewapp/models/movie_model.dart';
 import 'package:moviereviewapp/widgets/movie_info_page_widget.dart';
 
 class MoviePoster extends StatelessWidget {
-  MoviePoster(this.title, this.vote, this.imageUrl, this.movie);
-  final String title;
-  final double vote;
-  final String imageUrl;
+  MoviePoster(this.movie);
   final Movie movie;
 
   @override
   Widget build(BuildContext context) {
-    double stars = vote / 2; /// convert vote score to number of stars
+    double stars = movie.voteAverage / 2; /// convert vote score to number of stars
     return GestureDetector(
       onTap: () {
         if(Platform.isIOS) { Navigator.of(context).push(MaterialPageRoute(builder: (context) => MovieInfoPage(id: movie.id), settings: RouteSettings(name: 'MovieInfoPage'))); }
@@ -31,7 +28,13 @@ class MoviePoster extends StatelessWidget {
               fit: BoxFit.fill,
               child: ClipRRect(
                 borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                child: Image.network('https://image.tmdb.org/t/p/w500/$imageUrl')),
+                child: Image.network(
+                  'https://image.tmdb.org/t/p/w500/${movie.imageUrl}',
+                  errorBuilder: (BuildContext context, Object exception, StackTrace stackTrace) {
+                    return Text('Image failed to load');
+                  },
+                  ),
+                ),
             ),
           ),
           Positioned(
@@ -56,7 +59,7 @@ class MoviePoster extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      title,
+                      movie.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

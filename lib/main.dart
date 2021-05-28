@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:moviereviewapp/models/user_repository.dart';
 
 /// Utilities
 import 'package:moviereviewapp/utilities/ui_constants.dart';
@@ -7,6 +6,7 @@ import 'package:moviereviewapp/utilities/ui_constants.dart';
 /// Bloc + Cubit
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/user_cubit.dart';
+import 'package:moviereviewapp/models/user_repository.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/watchlist_page_widget.dart';
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           canvasColor: Color(kBackgroundColour),
           iconTheme: IconThemeData(
-            color: Color(kAccentColour), /// accent
+            color: Color(kAccentColour), /// accent colour
           ),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
             backgroundColor: Color(kNavigationBarColour),
@@ -111,13 +111,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Scaffold(
                   /// Use FloatingActionButton to change between test accounts
                   floatingActionButton: _currentPage == 1 ? FloatingActionButton(
-                    key: ValueKey('FAB'),
                     onPressed: () { BlocProvider.of<UserCubit>(context).alternateUser(); },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.person_rounded),
-                        Text('Change user', key: ValueKey('changeuserkey'), textAlign: TextAlign.center, style: TextStyle(fontSize: 9),),
+                        Text('Change user', textAlign: TextAlign.center, style: TextStyle(fontSize: 9),),
                       ],
                     ),
                   ) : Container(),
@@ -149,14 +148,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 );
               }
-              return Center(key: Key('loading'), child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator());
             },
           );
         } else if (state is UserError) {
-          return Center(key:Key('error'), child: Text('Failed to load user data'));
+          return Center(child: Text('Failed to load user data'));
           // TODO: should have a button where user can retry to load data
         } else {
-          return Center(key: Key('none'), child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
       },
     );

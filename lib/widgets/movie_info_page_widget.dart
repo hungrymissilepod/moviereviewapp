@@ -380,6 +380,7 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                key: ValueKey('titleTextFormField'),
                 decoration: InputDecoration(labelText: 'Title'),
                 onChanged: (value) { _title = value; },
                 validator: (value) {
@@ -389,6 +390,7 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
               ),
               SizedBox(height: 20),
               TextFormField(
+                key: ValueKey('bodyTextFormField'),
                 decoration: InputDecoration(labelText: 'Body'),
                 onChanged: (value) { _body = value; },
                 validator: (value) {
