@@ -56,8 +56,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  Future _future;
-
   PageController _pageController;
 
   /// Current page shown in PageView
@@ -66,17 +64,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    /// PageView should default to middle page
     _pageController = PageController(initialPage: 1);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _currentPage = 1;
     /// Load default user
-    _future = BlocProvider.of<UserCubit>(context).getUser('f0d64d51-e46b-41ac-95a8-621dbe806409');
+    BlocProvider.of<UserCubit>(context).getUser('f0d64d51-e46b-41ac-95a8-621dbe806409');
   }
-
+  
   @override
   void dispose() {
     _pageController.dispose();
@@ -93,69 +86,59 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<UserCubit, UserState>(
-      listener: (context, state) {
-        // TODO: can show messages based on UserState
-        // if (state is UserLoaded) {
-        //   ScaffoldMessenger.of(context).showSnackBar(
-        //     SnackBar(content: Text('error'),)
-        //   );
-        // }
-      },
       builder: (context, state) {
         if (state is UserLoaded) {
-          print('main - build - ${BlocProvider.of<UserCubit>(context).state}');
-          return FutureBuilder(
-            future: _future,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                return Scaffold(
-                  /// Use FloatingActionButton to change between test accounts
-                  floatingActionButton: _currentPage == 1 ? FloatingActionButton(
-                    onPressed: () { BlocProvider.of<UserCubit>(context).alternateUser(); },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.person_rounded),
-                        Text('Change user', textAlign: TextAlign.center, style: TextStyle(fontSize: 9),),
-                      ],
-                    ),
-                  ) : Container(),
-                  body: PageView(
-                    controller: _pageController,
-                    children: [
-                      WatchlistPage(),
-                      TrendingPage(),
-                      ProfilePage(),
-                    ],
-                  ),
-                  bottomNavigationBar: BottomNavigationBar(
-                    onTap: _onNavBarItemTapped,
-                    currentIndex: _currentPage,
-                    items: [
-                      BottomNavigationBarItem(
-                        label: 'Watchlist',
-                        icon: Icon(Icons.bookmark),
-                      ),
-                      BottomNavigationBarItem(
-                        label: 'Trending',
-                        icon: Icon(Icons.theaters),
-                      ),
-                      BottomNavigationBarItem(
-                        label: 'Profile',
-                        icon: Icon(Icons.person_rounded),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return Center(child: CircularProgressIndicator());
-            },
+          print('main - build - ${state.user.id}');
+          return Scaffold(
+            /// Use FloatingActionButton to change between test accounts
+            floatingActionButton: _currentPage == 1 ? FloatingActionButton(
+              onPressed: () { BlocProvider.of<UserCubit>(context).alternateUser(); },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_rounded),
+                  Text('Change user', textAlign: TextAlign.center, style: TextStyle(fontSize: 9),),
+                ],
+              ),
+            ) : Container(),
+            body: PageView(
+              controller: _pageController,
+              children: [
+                WatchlistPage(),
+                TrendingPage(),
+                ProfilePage(),
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              onTap: _onNavBarItemTapped,
+              currentIndex: _currentPage,
+              items: [
+                BottomNavigationBarItem(
+                  label: 'Watchlist',
+                  icon: Icon(Icons.bookmark),
+                ),
+                BottomNavigationBarItem(
+                  label: 'Trending',
+                  icon: Icon(Icons.theaters),
+                ),
+                BottomNavigationBarItem(
+                  label: 'Profile',
+                  icon: Icon(Icons.person_rounded),
+                ),
+              ],
+            ),
           );
+        }
+        return Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
+      /// Listen for UserState changes and show SnackBar
+      listener: (context, state) {
+        if (state is UserLoading) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loading user...')));
+        } else if (state is UserLoaded) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Loaded user: ${state.user.username}')));
         } else if (state is UserError) {
-          return Center(child: Text('Failed to load user data'));
-          // TODO: should have a button where user can retry to load data
-        } else {
-          return Center(child: CircularProgressIndicator());
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed loading user')));
         }
       },
     );

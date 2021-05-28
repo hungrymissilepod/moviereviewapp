@@ -48,6 +48,7 @@ class UserCubit extends Cubit<UserState> {
 
   /// Alternate user - for testing
   Future<void> alternateUser() async {
+    emit(UserLoading());
     final user = await _userRepository.fetchUser(_getNextUserId());
     emit(UserLoaded(user));
   }
