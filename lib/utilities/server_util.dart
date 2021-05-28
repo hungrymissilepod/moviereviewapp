@@ -14,12 +14,21 @@ import 'package:moviereviewapp/models/user_model.dart';
 var domain = "https://jakemoviereviewserver.herokuapp.com/api/user";
 
 /// Get User from database
-Future<User> getUser(String id) async {
+Future<User> getUser(String id, { http.Client client }) async {
   print('server_utils - getUser: $id');
   var url = Uri.parse('$domain/$id');
-  var response = await http.get(url);
-  final body = json.decode(response.body);
-  return User.fromJson(body);
+  http.Response response;
+
+  /// This method is used for unit testing so we have to check if http.Client has been supplied (mock client) or not
+  if (client == null) { response = await http.get(url); }
+  else { response = await client.get(url); }
+
+  /// If we get a good response from server
+  if (response.statusCode == 200) {
+    return User.fromJson(json.decode(response.body));
+  } else {
+    throw Exception('getUser - Bad response from server');
+  }
 }
 
 /// Get list of Movies for Trending Page

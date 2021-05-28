@@ -14,5 +14,3 @@ class UserRepository {
     return user;
   }
 }
-
-class NetworkException implements Exception {}

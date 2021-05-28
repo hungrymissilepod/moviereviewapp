@@ -13,7 +13,8 @@ class User {
   List<Movie> movies;
 
   factory User.fromJson(Map data) {
-    return User(
+    try {
+      return User(
       id: data['id'] as String ?? '',
       username: data['username'] as String ?? '',
       location: data['location'] as String ?? '',
@@ -21,5 +22,8 @@ class User {
       bio: data['bio'] as String ?? '',
       imageUrl: data['imageUrl'] as String ?? '',
     );
+    } catch (e) { /// error with parsing from json
+      return null;
+    }
   }
 }

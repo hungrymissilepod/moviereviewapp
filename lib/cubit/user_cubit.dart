@@ -6,6 +6,7 @@ import 'package:moviereviewapp/models/user_repository.dart';
 
 /// Utilities
 import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
+import 'package:equatable/equatable.dart';
 
 /// Models
 import 'package:moviereviewapp/models/user_model.dart';
@@ -29,14 +30,15 @@ class UserCubit extends Cubit<UserState> {
     /// If this movie is already in watchlist, remove it
     if (user.watchlist.contains(i)) {
       user.watchlist.remove(i);
-      user.movies.removeWhere((element) => element.id == i);
+      /// Remove this movies from user's movie list
+      int index = user.movies?.indexWhere((e) => e.id == i);
+      if (index != -1 && index != null) { user.movies.removeAt(index); }
       await server_util.removeMovieFromWatchlist(user.id, i);
     } else {
       user.watchlist.add(i);
       await server_util.addMovieToWatchlist(user.id, i);
       user.movies.add(await server_util.getMovieById(i));
     }
-
     emit(UserLoaded(user));
   }
 
