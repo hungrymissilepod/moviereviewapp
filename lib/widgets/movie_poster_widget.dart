@@ -4,6 +4,9 @@ import 'dart:io' show Platform;
 /// Utilities
 import 'package:moviereviewapp/utilities/size_config.dart';
 
+/// Widgets
+import 'package:moviereviewapp/widgets/common_widget.dart';
+
 /// Models
 import 'package:moviereviewapp/models/movie_model.dart';
 import 'package:moviereviewapp/widgets/movie_info_page_widget.dart';
@@ -14,7 +17,6 @@ class MoviePoster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double stars = movie.voteAverage / 2; /// convert vote score to number of stars
     return GestureDetector(
       onTap: () {
         if(Platform.isIOS) { Navigator.of(context).push(MaterialPageRoute(builder: (context) => MovieInfoPage(id: movie.id), settings: RouteSettings(name: 'MovieInfoPage'))); }
@@ -69,19 +71,7 @@ class MoviePoster extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: SizeConfig.blockSizeVertical * 1),
-                    Row(
-                      children: List.generate(5, (index) {
-                        IconData icon = Icons.star_outline_rounded; /// default to empty star
-                        /// If this movie has more stars than [index+1], show a full star
-                        if (stars > index+1) {
-                          icon = Icons.star_rounded;
-                          /// Check if this movie can get half a star. If stars are more than [index] and stars is greater by 0.5, show a half star
-                        } else if (stars > index && (stars - index) >= 0.5) {
-                          icon = Icons.star_half_rounded;
-                        }
-                        return Icon(icon, size: SizeConfig.blockSizeVertical * 3);
-                      }),
-                    ),
+                    StarRow(movie.voteAverage, showHalfStars: true),
                   ],
                 ),
               ),

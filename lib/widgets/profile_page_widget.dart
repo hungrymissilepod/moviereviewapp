@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _reviews.addAll(await server_util.getUserReviews(id));
   }
   
+  /// Delete a movie review
   _deleteReview(String id) async {
     await server_util.deleteReview(id);
     setState(() {
@@ -47,7 +48,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
     return SafeArea(
       child: BlocBuilder<UserCubit, UserState>(
@@ -66,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           UserInfoCard(_reviews),
                           Padding(
-                            padding: EdgeInsets.fromLTRB(0, 10, 0, 15),
+                            padding: EdgeInsets.fromLTRB(0, SizeConfig.blockSizeVertical * 1, 0, SizeConfig.blockSizeVertical * 0.5),
                             child: Text(
                               'My Reviews',
                               style: TextStyle(
@@ -77,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           Column(children: getReviewCards(state.user.id)),
-                          SizedBox(height: 50),
+                          SizedBox(height: SizeConfig.blockSizeVertical * 5),
                         ],
                       ),
                     ),
@@ -86,9 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 return Center(child: CircularProgressIndicator());
               },
             );
-          } else {
-            return Container(child: Text('not loaded'));
           }
+          return Center(child: Text('User failed to load'));
         }
       ),
     );
@@ -110,12 +109,12 @@ class UserInfoCard extends StatelessWidget {
             color: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
             child: Padding(
-              padding: const EdgeInsets.all(15.0),
+              padding: EdgeInsets.all(SizeConfig.blockSizeVertical * 1),
               child: Column(
                 children: [
                   Container(
-                    height: 150,
-                    width: 150,
+                    height: SizeConfig.blockSizeVertical * 15,
+                    width: SizeConfig.blockSizeVertical * 15,
                     decoration: BoxDecoration(
                       border: Border.all(color: Color(kAccentColour), width: 2),
                       shape: BoxShape.circle,
@@ -125,9 +124,9 @@ class UserInfoCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: SizeConfig.blockSizeVertical * 1),
                   Text(state.user.username),
-                  SizedBox(height: 10),
+                  SizedBox(height: SizeConfig.blockSizeVertical * 1),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -135,12 +134,12 @@ class UserInfoCard extends StatelessWidget {
                       Text(state.user.location),
                     ],
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: SizeConfig.blockSizeVertical * 1),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    padding: EdgeInsets.symmetric(horizontal: SizeConfig.blockSizeHorizontal * 3),
                     child: Text(state.user.bio, textAlign: TextAlign.center),
                   ),
-                  SizedBox(height: 10),
+                  SizedBox(height: SizeConfig.blockSizeVertical * 1),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -178,7 +177,7 @@ class UserInfoColumn extends StatelessWidget {
             icon,
           ],
         ),
-        SizedBox(height: 5),
+        SizedBox(height: SizeConfig.blockSizeVertical * 0.5),
         Text(label, style: TextStyle(fontSize: 16)),
       ],
     );

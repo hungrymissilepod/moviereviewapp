@@ -66,7 +66,6 @@ class _TrendingPageState extends State<TrendingPage> with AutomaticKeepAliveClie
 
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
     super.build(context);
     return SafeArea(

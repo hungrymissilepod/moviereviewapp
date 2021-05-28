@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Utilities
 import 'package:moviereviewapp/utilities/ui_constants.dart';
+import 'package:moviereviewapp/utilities/size_config.dart';
 
 /// Bloc + Cubit
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -85,10 +86,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig().init(context);
     return BlocConsumer<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
-          print('main - build - ${state.user.id}');
+          print('MyHomePage - build - ${state.user.id}');
           return Scaffold(
             /// Use FloatingActionButton to change between test accounts
             floatingActionButton: _currentPage == 1 ? FloatingActionButton(

@@ -5,9 +5,9 @@ import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/models/user_model.dart';
 
 class UserRepository {
-
+  
+  /// Get User from database
   Future<User> fetchUser(String id) async {
-    /// Get User from database
     User user = await server_util.getUser(id);
     /// Download user watchlist movies
     user.movies = await server_util.getWatchlistMovies(user.watchlist);

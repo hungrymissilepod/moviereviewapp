@@ -20,9 +20,12 @@ class UserCubit extends Cubit<UserState> {
 
   Future<void> getUser(String id) async {
     emit(UserLoading());
-    final user = await _userRepository.fetchUser(id);
-    emit(UserLoaded(user));
-    // TODO: handle errors here - could have network error when getting user
+    try {
+      final user = await _userRepository.fetchUser(id);
+      emit(UserLoaded(user));
+    } catch (e) {
+      emit(UserError('Failed to get user'));
+    }
   }
 
   /// When user toggles to add or remove movie from watchlist
@@ -39,34 +42,23 @@ class UserCubit extends Cubit<UserState> {
       await server_util.addMovieToWatchlist(user.id, i);
       user.movies.add(await server_util.getMovieById(i));
     }
-    emit(UserLoaded(user));
   }
 
-  
+
+  /// Test accounts
+  List<String> _testAccounts = [ 'f0d64d51-e46b-41ac-95a8-621dbe806409', 'e0d41103-d763-455c-8232-956206005d3d', '6d95bf83-8fb3-43b3-8fba-d5792b52d75f' ];
+
   /// The current test account signed in
   int _currentUser = 0;
 
   /// Alternate user - for testing
   Future<void> alternateUser() async {
     emit(UserLoading());
-    final user = await _userRepository.fetchUser(_getNextUserId());
-    emit(UserLoaded(user));
-  }
+    /// Increment user account
+    _currentUser++;
+    if (_currentUser > _testAccounts.length-1) { _currentUser = 0; }
 
-  String _getNextUserId() {
-    switch (_currentUser) {
-      case 0:
-        _currentUser = 1;
-        return 'e0d41103-d763-455c-8232-956206005d3d';
-      case 1:
-        _currentUser = 2;
-        return '6d95bf83-8fb3-43b3-8fba-d5792b52d75f';
-      case 2:
-        _currentUser = 0;
-        return 'f0d64d51-e46b-41ac-95a8-621dbe806409';
-      default:
-        _currentUser = 0;
-        return 'f0d64d51-e46b-41ac-95a8-621dbe806409';
-    }
+    final user = await _userRepository.fetchUser(_testAccounts[_currentUser]);
+    emit(UserLoaded(user));
   }
 }

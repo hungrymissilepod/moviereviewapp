@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 
 /// Utilities
-// import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
 import 'package:moviereviewapp/utilities/ui_constants.dart';
 
 /// Bloc + Cubit
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:moviereviewapp/cubit/user_cubit.dart';
-
-/// Models
-// import 'package:moviereviewapp/models/movie_model.dart';
-// import 'package:moviereviewapp/models/user_model.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/movie_grid_widget.dart';
@@ -22,16 +17,12 @@ class WatchlistPage extends StatefulWidget {
 }
 
 class _WatchlistPageState extends State<WatchlistPage> {
-
-  // TODO: should download movie data if user watchlist changes!
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
     double gridPadding = SizeConfig.blockSizeHorizontal * 3;
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
-          print('watchlist page - bloc builder - loaoded');
           return SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: gridPadding),
@@ -63,7 +54,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
             ),
           );
         }
-        return Container(child: Text('no movies'));
+        return Scaffold(body: Container(child: Text('Failed to load watchlist')));
       }
     );
   }

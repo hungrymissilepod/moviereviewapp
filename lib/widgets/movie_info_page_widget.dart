@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/size_config.dart';
 import 'package:moviereviewapp/utilities/ui_constants.dart';
+import 'package:uuid/uuid.dart';
 
 /// Models
 import 'package:moviereviewapp/models/review_model.dart';
@@ -11,12 +12,11 @@ import 'package:moviereviewapp/models/movie_info_model.dart';
 
 /// Widgets
 import 'package:moviereviewapp/widgets/user_review_widget.dart';
+import 'package:moviereviewapp/widgets/common_widget.dart';
 
 /// Bloc + Cubit
 import 'package:moviereviewapp/cubit/user_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:uuid/uuid.dart';
 
 class MovieInfoPage extends StatefulWidget {
   
@@ -31,12 +31,17 @@ class MovieInfoPage extends StatefulWidget {
 class _MovieInfoPageState extends State<MovieInfoPage> {
 
   Future _future;
+
+  /// Movie information for this movie
   MovieInfo _movieInfo;
+
+  /// User reviews for this movie
   List<Review> _reviews = [];
 
   @override
   void initState() {
     super.initState();
+    /// Get movie information and reviews for this movie
     _future = getMovieInfo();
   }
 
@@ -52,6 +57,7 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
     return _movieInfo;
   }
   
+  /// Delete user review
   _deleteReview(String id) async {
     await server_util.deleteReview(id);
     setState(() {
@@ -59,17 +65,8 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
     });
   }
 
-  List<Widget> getReviewCards(String id) {
-    List<Widget> widgets = [];
-    for (Review r in _reviews) {
-      widgets.add(UserReviewCard(r, id, _deleteReview));
-    }
-    return widgets;
-  }
-
   /// Add or remove movie to watchlist
   _tapFavouriteButton(UserLoaded state) async {
-    print('tapFavouriteButton: ${_movieInfo.id}');
     setState(() {
       BlocProvider.of<UserCubit>(context).toggleMovieInWatchlist(state.user, _movieInfo.id);
     });
@@ -77,190 +74,200 @@ class _MovieInfoPageState extends State<MovieInfoPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Material(
       child: SafeArea(
         top: false,
-        child : FutureBuilder(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              double stars = _movieInfo.voteAverage / 2; /// convert vote score to number of stars
-              bool liked = false;
-              return BlocBuilder<UserCubit, UserState>(
-                builder: (context, state) {
-                  if (state is UserLoaded) {
-                    liked = state.user.watchlist.contains(_movieInfo.id);
+        child: BlocBuilder<UserCubit, UserState>(
+          builder: (context, state) {
+            if (state is UserLoaded) {
+              return FutureBuilder(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    /// Check if user has 'liked' this movie. Is it in user's watchlist
+                    bool liked = state.user.watchlist.contains(_movieInfo.id);
                     return Scaffold(
+                      body: Column(
+                        children: [
+                          MovieImageHeader(_movieInfo, liked, _tapFavouriteButton, state),
+                          MovieInfoBody(_movieInfo, state, _reviews, _deleteReview),
+                        ],
+                      ),
+                      /// FloatingActionButton for writing a user revieww
                       floatingActionButton: FloatingActionButton(
+                        child: Icon(Icons.rate_review_rounded),
                         onPressed: () {
                           showDialog(context: context, builder: (BuildContext context) => WriteReviewDialog(state.user.id, _movieInfo.id));
                         },
-                        child: Icon(Icons.rate_review_rounded),
-                      ),
-                      body: Column(
-                        children: [
-                          Stack(
-                            fit: StackFit.passthrough,
-                            children: [
-                              // TODO: entire page should only display once image is loaded
-                              Container(
-                                height: 260,
-                                child: Image.network(
-                                  'https://image.tmdb.org/t/p/original/${_movieInfo.backdropUri}',
-                                  fit: BoxFit.cover,
-                                  loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                    return Center(child: CircularProgressIndicator());
-                                  },
-                                ),
-                              ),
-                              Positioned(
-                                top: 0,
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [ Colors.transparent, Colors.black87.withOpacity(0.35), Colors.black87 ],
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: SizeConfig.blockSizeVertical * 1, horizontal: SizeConfig.blockSizeHorizontal * 3),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Text(
-                                          _movieInfo.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 50,
-                                left: 20,
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onTap: () { Navigator.of(context).pop(); },
-                                  child: Icon(
-                                    Icons.arrow_back_rounded,
-                                    color: Colors.white,
-                                    size: 40,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 50,
-                                right: 20,
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onTap: () { _tapFavouriteButton(state); },
-                                  child: Icon(
-                                    liked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                                    size: 40,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SingleChildScrollView(
-                            physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${_movieInfo.voteAverage}',
-                                        style: TextStyle(color: Color(kAccentColour), fontSize: 24),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Row(
-                                        children: List.generate(5, (index) {
-                                          IconData icon = Icons.star_outline_rounded; /// default to empty star
-                                          /// If this movie has more stars than [index+1], show a full star
-                                          if (stars > index+1) {
-                                            icon = Icons.star_rounded;
-                                            /// Check if this movie can get half a star. If stars are more than [index] and stars is greater by 0.5, show a half star
-                                          } else if (stars > index && (stars - index) >= 0.5) {
-                                            icon = Icons.star_half_rounded;
-                                          }
-                                          return Icon(icon, size: SizeConfig.blockSizeVertical * 3);
-                                        }),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 15),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${(_movieInfo.runtime/60).floor()}h ${_movieInfo.runtime%60}mins',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ), // TODO: check this code. Could unit test it??
-                                      SizedBox(width: 20),
-                                      Text(
-                                        '${_movieInfo.releaseDate}',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ), // TODO: show release date in nice way
-                                    ],
-                                  ),
-                                  SizedBox(height: 15),
-                                  SizedBox(
-                                    height: 40,
-                                      child: ListView.builder(
-                                      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: _movieInfo.genres.length,
-                                      itemBuilder: (BuildContext context, int index) {
-                                        return GenreChip(_movieInfo.genres[index].name);
-                                      },
-                                    ),
-                                  ),
-                                  HeadingText('Synopsis'),
-                                  Text(
-                                    _movieInfo.overview,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  HeadingText('User Reviews'),
-                                  Column(
-                                    children: getReviewCards(state.user.id),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     );
                   }
-                },
+                  return Center(child: CircularProgressIndicator());
+                }
               );
             }
             return Center(child: CircularProgressIndicator());
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Image at top of movie info page
+class MovieImageHeader extends StatelessWidget {
+
+  MovieImageHeader(this.movieInfo, this.liked, this.onTap, this.state);
+  final MovieInfo movieInfo;
+  final bool liked;
+  final Function onTap;
+  final UserState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        Container(
+          height: SizeConfig.blockSizeVertical * 26,
+          child: Image.network(
+            'https://image.tmdb.org/t/p/original/${movieInfo.backdropUri}',
+            fit: BoxFit.cover,
+            loadingBuilder:(BuildContext context, Widget child,ImageChunkEvent loadingProgress) {
+            if (loadingProgress == null) return child;
+              return Center(child: CircularProgressIndicator());
+            },
+          ),
+        ),
+        Positioned(
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [ Colors.transparent, Colors.black87.withOpacity(0.35), Colors.black87 ],
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: SizeConfig.blockSizeVertical * 1, horizontal: SizeConfig.blockSizeHorizontal * 3),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    movieInfo.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 50,
+          left: 20,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () { Navigator.of(context).pop(); },
+            child: Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.white,
+              size: 40,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 50,
+          right: 20,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () { onTap(state); },
+            child: Icon(
+              liked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+              size: 40,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MovieInfoBody extends StatelessWidget {
+
+  MovieInfoBody(this.movieInfo, this.state, this.reviews, this.onDeleteReview);
+
+  final MovieInfo movieInfo;
+  final UserLoaded state;
+  final List<Review> reviews;
+  final Function onDeleteReview;
+
+  List<Widget> getReviewCards(String id) {
+    List<Widget> widgets = [];
+    for (Review r in reviews) {
+      widgets.add(UserReviewCard(r, id, onDeleteReview));
+    }
+    return widgets;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('${movieInfo.voteAverage}', style: TextStyle(color: Color(kAccentColour), fontSize: 24)),
+                SizedBox(width: SizeConfig.blockSizeHorizontal * 1),
+                StarRow(movieInfo.voteAverage, showHalfStars: true),
+              ],
+            ),
+            SizedBox(height: SizeConfig.safeBlockVertical * 1),
+            Row(
+              children: [
+                Text(
+                  '${(movieInfo.runtime/60).floor()}h ${movieInfo.runtime%60}mins',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w400),
+                ),
+                SizedBox(width: SizeConfig.blockSizeHorizontal * 3),
+                Text(
+                  '${movieInfo.releaseDate}',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w400),
+                ),
+              ],
+            ),
+            SizedBox(height: SizeConfig.safeBlockVertical * 1.5),
+            SizedBox(
+              height: SizeConfig.safeBlockVertical * 5,
+              child: ListView.builder(
+                physics: BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                scrollDirection: Axis.horizontal,
+                itemCount: movieInfo.genres.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return GenreChip(movieInfo.genres[index].name);
+                },
+              ),
+            ),
+            HeadingText('Synopsis'),
+            Text(movieInfo.overview, style: TextStyle(color: Colors.white, fontSize: 14)),
+            HeadingText('User Reviews'),
+            Column(children: getReviewCards(state.user.id)),
+          ],
         ),
       ),
     );
@@ -275,7 +282,7 @@ class HeadingText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 25, 0,10),
+      padding: EdgeInsets.fromLTRB(0, SizeConfig.blockSizeVertical * 3, 0, SizeConfig.blockSizeVertical * 1),
       child: Text(
         text,
         style: TextStyle(
@@ -288,7 +295,7 @@ class HeadingText extends StatelessWidget {
   }
 }
 
-// TODO: comment code
+/// Chip to show movie genres
 class GenreChip extends StatelessWidget {
 
   GenreChip(this.genre);
@@ -348,20 +355,27 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
     /// Post review to database
     String id = Uuid().v4();
     Review r = Review(id: id, userId: widget.userId, movieId: widget.movieId, title: _title, body: _body, rating: _rating * 2); /// multiply by 2 because we have 5 stars but rating should be out of 10
-    await server_util.postReview(r);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submitting Review')));
-    _closeForm();
+
+    /// Catch errors when trying to post review
+    try {
+      await server_util.postReview(r);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submitting Review')));
+      _closeForm();
+    } catch(e) {
+      setState(() { _error = 'An error occured. Please try again.'; });
+    }
   }
 
   _closeForm() {
     Navigator.of(context).pop();
   }
 
+  /// Text widget to display error messges
   Widget showAlert() {
     if (_error != null) {
       return Column(
         children: [
-          SizedBox(height:10),
+          SizedBox(height: SizeConfig.blockSizeVertical * 1),
           Text(_error, style: TextStyle(color: Color(kAccentColour), fontSize: 13)),
         ],
       );
@@ -388,7 +402,7 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              SizedBox(height: SizeConfig.blockSizeVertical * 2),
               TextFormField(
                 key: ValueKey('bodyTextFormField'),
                 decoration: InputDecoration(labelText: 'Body'),
@@ -399,7 +413,7 @@ class _WriteReviewDialogState extends State<WriteReviewDialog> {
                   return null;
                 },
               ),
-              SizedBox(height: 40),
+              SizedBox(height: SizeConfig.blockSizeVertical * 4),
               StarRating(
                 rating: _rating,
                 onRatingChanged: (rating) => setState(() => _rating = rating),

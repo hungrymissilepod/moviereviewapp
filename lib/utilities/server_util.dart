@@ -37,10 +37,12 @@ Future<List<Movie>> getMovies(int page) async {
   /// Get movie data for this [page]
   var url = Uri.parse('https://api.themoviedb.org/3/movie/popular?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US&page=$page');
   var response = await http.get(url);
-  /// Deserialise reponse body to json
-  final body = json.decode(response.body);
-  /// Convert json to list of Movies and return them
-  return ((body['results'] as List).map((e) => Movie.fromJson(e as Map<String, dynamic>)).toList());
+  if (response.statusCode == 200) {
+    /// Deserialise reponse body to json
+    final body = json.decode(response.body);
+    /// Convert json to list of Movies and return them
+    return ((body['results'] as List).map((e) => Movie.fromJson(e as Map<String, dynamic>)).toList());
+  } else { throw Exception('getMovies - Bad response from server'); }
 }
 
 /// Get list of Movies for user's [watchlist]
@@ -50,8 +52,10 @@ Future<List<Movie>> getWatchlistMovies(List<int> watchlist) async {
   for (int i in watchlist) {
     var url = Uri.parse('https://api.themoviedb.org/3/movie/$i?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');  
     var response = await http.get(url);
-    final body = json.decode(response.body);
-    _movies.add(Movie.fromJson(body));
+    if (response.statusCode == 200) {
+      final body = json.decode(response.body);
+      _movies.add(Movie.fromJson(body));
+    }
   }
   return _movies;
 }
@@ -61,8 +65,10 @@ Future<Movie> getMovieById(int id) async {
   print('server_util - getMovieById: $id');
   var url = Uri.parse('https://api.themoviedb.org/3/movie/$id?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');  
   var response = await http.get(url);
-  final body = json.decode(response.body);
-  return Movie.fromJson(body);
+  if (response.statusCode == 200) {
+    final body = json.decode(response.body);
+    return Movie.fromJson(body);
+  } else { throw Exception('getMovieById - Bad response from server'); }
 }
 
 /// Get information about movie from The Movie Database
@@ -70,16 +76,17 @@ Future<MovieInfo> getMovieInfo(int movieId) async {
   print('server_util - getMovieInfo: $movieId');
   var url = Uri.parse('https://api.themoviedb.org/3/movie/$movieId?api_key=8c043f485c2ba60127587c01b27e413d&language=en-US');
   var response = await http.get(url);
-  final body = json.decode(response.body);
-  return MovieInfo.fromJSON(body);
+  if (response.statusCode == 200) {
+    final body = json.decode(response.body);
+    return MovieInfo.fromJSON(body);
+  } else { throw Exception('getMovieInfo - Bad response from server'); }
 }
 
 /// Add a movie with [id] to user watchlist
 Future<void> addMovieToWatchlist(String userId, int movieId) async {
   print('server_util - addMovieToWatchList: $movieId');
   var url = Uri.parse('$domain/$userId/watchlist?movie_id=$movieId');
-  var response = await http.put(url);
-  print(response.body);
+  await http.put(url);
 }
 
 /// Add a movie with [id] from user watchlist
@@ -94,8 +101,10 @@ Future<List<Review>> getUserReviews(String id) async {
   print('server_util - getUserReviews: $id');
   var url = Uri.parse('$domain/review/user/$id');
   var response = await http.get(url);
-  final body = json.decode(response.body);
-  return ((body as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList()); 
+  if (response.statusCode == 200) {
+    final body = json.decode(response.body);
+    return ((body as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList()); 
+  } else { throw Exception('getUserReviews - Bad response from server'); }
 }
 
 /// Post Review to database
@@ -104,21 +113,22 @@ Future<void> postReview(Review review) async {
   var url = Uri.parse('$domain/review?user_id=${review.userId}&movie_id=${review.movieId}');
   String str = json.encode(review.toMap());
   var response = await http.post(url, headers: { 'Content-Type': 'application/json', }, body: str);
-  print(response.body);
+  if (response.statusCode != 200) throw Exception('postReview - Bad response from server');
 }
 
 /// Delete Review
 Future<void> deleteReview(String id) async {
   print('server_util - postReview');
   var url = Uri.parse('$domain/review?review_id=$id');
-  var response = await http.delete(url);
-  print(response.body);
+  await http.delete(url);
 }
 
 Future<List<Review>> getReviewsForMovie(int i) async {
   print('server_util - getReviewsForMovie: $i');
   var url = Uri.parse('$domain/review/movie/$i');
   var response = await http.get(url);
-  final body = json.decode(response.body);
-  return ((body as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList()); 
+  if (response.statusCode == 200) {
+    final body = json.decode(response.body);
+    return ((body as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList());
+  } else { throw Exception('getReviewsForMovie - Bad response from server'); }
 }

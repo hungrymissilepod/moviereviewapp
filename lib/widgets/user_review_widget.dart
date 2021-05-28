@@ -9,10 +9,12 @@ import 'package:moviereviewapp/utilities/server_util.dart' as server_util;
 import 'package:moviereviewapp/utilities/ui_constants.dart';
 import 'package:moviereviewapp/utilities/size_config.dart';
 
+/// Widgets
+import 'package:moviereviewapp/widgets/common_widget.dart';
+
 /// Models
 import 'package:moviereviewapp/models/review_model.dart';
 import 'package:moviereviewapp/models/user_model.dart';
-
 
 class UserReviewCard extends StatefulWidget {
 
@@ -45,7 +47,6 @@ class _UserReviewCardState extends State<UserReviewCard> {
 
   @override
   Widget build(BuildContext context) {
-
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
@@ -69,8 +70,8 @@ class _UserReviewCardState extends State<UserReviewCard> {
                               Row(
                                 children: [
                                   Container(
-                                    height: 20,
-                                    width: 20,
+                                    height: SizeConfig.blockSizeVertical * 2,
+                                    width: SizeConfig.blockSizeVertical * 2,
                                     decoration: BoxDecoration(
                                       border: Border.all(color: Color(kAccentColour)),
                                       shape: BoxShape.circle,
@@ -80,7 +81,7 @@ class _UserReviewCardState extends State<UserReviewCard> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: 6),
+                                  SizedBox(width: SizeConfig.blockSizeHorizontal * 0.6),
                                   Text(
                                     username,
                                     style: TextStyle(fontSize: 12),
@@ -99,12 +100,12 @@ class _UserReviewCardState extends State<UserReviewCard> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(height: 6),
+                                    SizedBox(width: SizeConfig.blockSizeHorizontal * 0.6),
                                     Text(
                                       widget.review.title,
                                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                     ),
-                                    SizedBox(height: 6),
+                                    SizedBox(width: SizeConfig.blockSizeHorizontal * 0.6),
                                     Text(
                                       widget.review.body,
                                       style: TextStyle(fontSize: 14),
@@ -139,24 +140,6 @@ class _UserReviewCardState extends State<UserReviewCard> {
         }
         return CircularProgressIndicator();
       }
-    );
-  }
-}
-
-class StarRow extends StatelessWidget {
-    
-  StarRow(this.voteAverage);
-  final double voteAverage;
-  
-  @override
-  Widget build(BuildContext context) {
-    double stars = voteAverage / 2; /// convert vote score to number of stars
-    return Row(
-      children: List.generate(5, (index) {
-        IconData icon = Icons.star_outline_rounded; /// default to empty star
-        if (stars > index) { icon = Icons.star_rounded; }
-        return Icon(icon, size: SizeConfig.blockSizeVertical * 3);
-      }),
     );
   }
 }
