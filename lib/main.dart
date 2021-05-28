@@ -94,6 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return Scaffold(
             /// Use FloatingActionButton to change between test accounts
             floatingActionButton: _currentPage == 1 ? FloatingActionButton(
+              key: ValueKey('FAB'),
               onPressed: () { BlocProvider.of<UserCubit>(context).alternateUser(); },
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -112,6 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
+              key: ValueKey('bottomNavBar'),
               onTap: _onNavBarItemTapped,
               currentIndex: _currentPage,
               items: [
